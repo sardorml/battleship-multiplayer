@@ -28,15 +28,21 @@ const DropGrid: React.FC = () => {
         const row = Math.floor(relativeY / cellSize);
 
         const numberOfRows = Math.ceil(item.size / cellSize);
-        if (column >= 0 && column < 10 && row >= 0 && row < 10) {
+        const adjustedRow = Math.min(row, 10 - numberOfRows); // Prevent overflow
+
+        if (
+          column >= 0 &&
+          column < 10 &&
+          adjustedRow >= 0 &&
+          adjustedRow < 10
+        ) {
           const hoveredCells = [];
           for (let i = 0; i < numberOfRows; i++) {
-            if (row + i < 10) {
-              hoveredCells.push([row + i, column]);
+            if (adjustedRow + i < 10) {
+              hoveredCells.push([adjustedRow + i, column]);
             }
           }
           hovered.current = hoveredCells;
-          console.log(hoveredCells);
           setHoveredCell(hoveredCells);
         }
       }
@@ -44,7 +50,10 @@ const DropGrid: React.FC = () => {
     drop: (item: { id: string; size: number }) => {
       console.log(hovered);
       if (!hovered.current) return;
-      const position = hovered.current[0] as [number, number]; // Get the first hovered cell's position
+
+      // Get the first hovered cell's position
+      const position = hovered.current[0] as [number, number];
+
       setDroppedSquares((prev) => [
         ...prev,
         {

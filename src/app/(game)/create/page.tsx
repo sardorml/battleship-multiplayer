@@ -16,7 +16,10 @@ export default function Create() {
         Name
       </label>
       <input id="room" type="text" placeholder="room name" />
-      <div className="flex">
+      <label className="text-md text-stone-600" htmlFor="select-position">
+        Select your position
+      </label>
+      <div className="flex" id="select-position">
         <DraggableSquare />
         <DraggableSquare size={40} />
         <DraggableSquare size={60} />
