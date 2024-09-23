@@ -15,15 +15,14 @@ export default function Create() {
       <label className="text-md text-stone-600" htmlFor="select-position">
         Select your position
       </label>
-      <div className="flex" id="select-position">
+      <div className="flex gap-1" id="select-position">
         <DraggableSquare />
         <DraggableSquare size={40} />
         <DraggableSquare size={60} />
         <DraggableSquare size={80} />
         <DraggableSquare size={100} />
+        <DropGrid />
       </div>
-
-      <DropGrid />
     </div>
   );
 }

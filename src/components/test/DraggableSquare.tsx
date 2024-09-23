@@ -9,7 +9,7 @@ interface DraggableSquareProps {
 const DraggableSquare: React.FC<DraggableSquareProps> = ({ size = 20 }) => {
   const [{ isDragging }, drag, dragPreview] = useDrag(() => ({
     type: "SQUARE",
-    item: { id: "unique-square-id", size }, // Add an id or other properties here
+    item: { id: `unique-square-id${size}`, size }, // Add an id or other properties here
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),

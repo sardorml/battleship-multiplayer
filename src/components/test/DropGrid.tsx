@@ -1,14 +1,14 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useDrop } from "react-dnd";
 import clsx from "clsx";
 import DroppedSquare from "./DroppedSquare"; // Import the new component
 
+type DroppedSquaresT = { id: string; position: number[][]; size: number }[];
 const DropGrid: React.FC = () => {
   const [hoveredCell, setHoveredCell] = useState<number[][]>([]);
   const hovered = useRef<number[][]>();
-  const [droppedSquares, setDroppedSquares] = useState<
-    { id: string; position: number[][]; size: number }[]
-  >([]);
+  const [droppedSquares, setDroppedSquares] = useState<DroppedSquaresT>([]);
+  const droppedSquaresRef = useRef<DroppedSquaresT>([]);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
   const [, drop] = useDrop(() => ({
@@ -17,7 +17,11 @@ const DropGrid: React.FC = () => {
     drop: handleDrop,
   }));
 
-  function handleDrop(item: { id: string; size: number }) {
+  function handleDrop(item: {
+    id: string;
+    size: number;
+    position: number[][];
+  }) {
     console.log(hovered);
     if (!hovered.current) return;
 
@@ -26,8 +30,13 @@ const DropGrid: React.FC = () => {
 
     setDroppedSquares((prev) => {
       // Check if a square with the same id already exists
-      console.log("dropped squares", prev);
-      const squareIndex = prev.findIndex((square) => square.size === item.size);
+      // console.log("dropped squares", prev);
+      const squareIndex = prev.findIndex((square) => {
+        console.log("square.id", square.id);
+        console.log("item.id", item.id);
+
+        return square.id === item.id;
+      });
 
       if (squareIndex !== -1) {
         // If found, update its position
@@ -42,7 +51,7 @@ const DropGrid: React.FC = () => {
         return [
           ...prev,
           {
-            id: item.id + item.size,
+            id: item.id,
             position,
             size: item.size,
           },
@@ -52,8 +61,14 @@ const DropGrid: React.FC = () => {
     setHoveredCell([]); // Clear hovered cells after drop
   }
 
-  function handleHover(item: { id: string; size: number }, monitor: any) {
+  function handleHover(
+    item: { id: string; size: number; position: number[][] },
+    monitor: any
+  ) {
+    // console.log("dropped squears when hover", droppedSquares);
     if (!gridRef.current) return;
+
+    // console.log("monitor", monitor);
 
     const gridRect = gridRef.current.getBoundingClientRect();
     const dropPosition = monitor.getClientOffset();
@@ -68,7 +83,8 @@ const DropGrid: React.FC = () => {
 
       const numberOfRows = Math.ceil(item.size / cellSize);
       const adjustedRow = Math.min(row, 10 - numberOfRows); // Prevent overflow
-
+      console.log("postion", item.position);
+      hovered.current = item.position;
       if (column >= 0 && column < 10 && adjustedRow >= 0 && adjustedRow < 10) {
         const hoveredCells = [];
         for (let i = 0; i < numberOfRows; i++) {
@@ -83,7 +99,7 @@ const DropGrid: React.FC = () => {
     }
   }
 
-  const handleBoxClick = (id: string, size: number) => {
+  const rotateSquare = (id: string, size: number) => {
     setDroppedSquares((prev) => {
       const squareIndex = prev.findIndex((square) => square.id === id);
       if (squareIndex !== -1) {
@@ -132,13 +148,21 @@ const DropGrid: React.FC = () => {
         }
 
         // Update positions
-        return prev.map((square, index) =>
+        const updated = prev.map((square, index) =>
           index === squareIndex ? { ...square, position: newPositions } : square
         );
+        droppedSquaresRef.current = updated;
+        return updated;
       }
       return prev; // Return unchanged if no square is found
     });
+    setHoveredCell([]);
+    // console.log("dropped squears when clicked on box", droppedSquares);
   };
+
+  useEffect(() => {
+    console.log("droppedSquares updated:", droppedSquares);
+  }, [droppedSquares]);
 
   return (
     <div
@@ -172,7 +196,7 @@ const DropGrid: React.FC = () => {
           position={square.position}
           size={square.size}
           id={square.id}
-          onClick={() => handleBoxClick(square.id, square.size)}
+          onClick={() => rotateSquare(square.id, square.size)}
         />
       ))}
     </div>

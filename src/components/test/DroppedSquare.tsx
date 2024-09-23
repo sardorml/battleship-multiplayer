@@ -7,6 +7,7 @@ const DroppedSquare: React.FC<{
   id: string;
   onClick: () => void;
 }> = ({ position, size, id, onClick }) => {
+  console.log("position.dropped", position);
   const cellSize = 20; // Each cell is 20px
 
   // Use react-dnd's useDrag hook
