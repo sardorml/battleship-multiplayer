@@ -2,12 +2,12 @@ import React from "react";
 import { useDrag } from "react-dnd";
 
 const DroppedSquare: React.FC<{
-  position: [number, number];
+  position: number[][]; // Updated to accept multiple positions
   size: number;
   id: string;
-}> = ({ position, size, id }) => {
+  onClick: () => void;
+}> = ({ position, size, id, onClick }) => {
   const cellSize = 20; // Each cell is 20px
-  const [row, column] = position;
 
   // Use react-dnd's useDrag hook
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -21,18 +21,29 @@ const DroppedSquare: React.FC<{
   return (
     <div
       ref={drag}
+      onClick={onClick}
       style={{
         position: "absolute",
-        top: row * cellSize,
-        left: column * cellSize,
-        width: "20px", // Adjust this based on the size or the desired appearance
-        height: `${size}px`, // Size from the dropped item
         backgroundColor: isDragging
           ? "rgba(100, 100, 250, 0.3)" // Change the opacity when dragging
           : "rgba(100, 100, 250, 0.5)", // Example color when not dragging
         cursor: "move", // Show a move cursor to indicate it's draggable
       }}
-    />
+    >
+      {position.map(([row, column]) => (
+        <div
+          key={`${row}-${column}`}
+          style={{
+            position: "absolute",
+            top: row * cellSize,
+            left: column * cellSize,
+            width: `${cellSize}px`, // Adjust width based on cell size
+            height: `${cellSize}px`, // Adjust height based on cell size
+            backgroundColor: "inherit", // Inherit background color
+          }}
+        />
+      ))}
+    </div>
   );
 };
 

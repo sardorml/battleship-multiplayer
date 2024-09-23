@@ -4,10 +4,6 @@ import DraggableSquare from "@/components/test/DraggableSquare";
 import DropGrid from "@/components/test/DropGrid";
 import React from "react";
 
-const GridSelector = () => {
-  return <div></div>;
-};
-
 export default function Create() {
   return (
     <div className="flex flex-col">

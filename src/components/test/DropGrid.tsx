@@ -7,7 +7,7 @@ const DropGrid: React.FC = () => {
   const [hoveredCell, setHoveredCell] = useState<number[][]>([]);
   const hovered = useRef<number[][]>();
   const [droppedSquares, setDroppedSquares] = useState<
-    { id: string; position: [number, number]; size: number }[]
+    { id: string; position: number[][]; size: number }[]
   >([]);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -22,7 +22,7 @@ const DropGrid: React.FC = () => {
     if (!hovered.current) return;
 
     // Get the first hovered cell's position
-    const position = hovered.current[0] as [number, number];
+    const position = hovered.current;
 
     setDroppedSquares((prev) => {
       // Check if a square with the same id already exists
@@ -77,10 +77,68 @@ const DropGrid: React.FC = () => {
           }
         }
         hovered.current = hoveredCells;
+        console.log("postion", hovered.current);
         setHoveredCell(hoveredCells);
       }
     }
   }
+
+  const handleBoxClick = (id: string, size: number) => {
+    setDroppedSquares((prev) => {
+      const squareIndex = prev.findIndex((square) => square.id === id);
+      if (squareIndex !== -1) {
+        const currentSquare = prev[squareIndex];
+        const currentPositions = currentSquare.position;
+
+        // Determine if the square is currently vertical or horizontal
+        const isVertical =
+          currentPositions.length > 1 &&
+          currentPositions.every(
+            (pos, index) => pos[1] === currentPositions[0][1] // Check if all columns are the same
+          );
+
+        const newPositions: number[][] = [];
+        const sizeInCells = size / 20; // Assuming size is in pixels and each cell is 20px
+        const gridSize = 10; // Assuming a 10x10 grid
+
+        if (isVertical) {
+          // Rotate to horizontal
+          const [row, col] = currentPositions[0];
+          for (let i = 0; i < sizeInCells; i++) {
+            newPositions.push([row, col + i]);
+          }
+
+          // Check for overflow and adjust if necessary
+          const overflow = newPositions.some((pos) => pos[1] >= gridSize);
+          if (overflow) {
+            const offset =
+              newPositions[newPositions.length - 1][1] - (gridSize - 1);
+            newPositions.forEach((pos) => (pos[1] -= offset)); // Move left to fit within grid
+          }
+        } else {
+          // Rotate to vertical
+          const [startRow, startCol] = currentPositions[0];
+          for (let i = 0; i < sizeInCells; i++) {
+            newPositions.push([startRow + i, startCol]);
+          }
+
+          // Check for overflow and adjust if necessary
+          const overflow = newPositions.some((pos) => pos[0] >= gridSize);
+          if (overflow) {
+            const offset =
+              newPositions[newPositions.length - 1][0] - (gridSize - 1);
+            newPositions.forEach((pos) => (pos[0] -= offset)); // Move up to fit within grid
+          }
+        }
+
+        // Update positions
+        return prev.map((square, index) =>
+          index === squareIndex ? { ...square, position: newPositions } : square
+        );
+      }
+      return prev; // Return unchanged if no square is found
+    });
+  };
 
   return (
     <div
@@ -114,6 +172,7 @@ const DropGrid: React.FC = () => {
           position={square.position}
           size={square.size}
           id={square.id}
+          onClick={() => handleBoxClick(square.id, square.size)}
         />
       ))}
     </div>
