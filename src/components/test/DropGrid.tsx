@@ -31,14 +31,20 @@ const DropGrid: React.FC = () => {
       if (dropPosition) {
         const relativeX = dropPosition.x - gridRect.left;
         const relativeY = dropPosition.y - gridRect.top;
+        console.log("relativeX", relativeX);
+        console.log("relativeY", relativeY);
+        console.log("gridRect", gridRect);
+        console.log("dropPosition", dropPosition);
 
         const cellSize = 20; // Each cell is 20px
         const column = Math.floor(relativeX / cellSize);
         const row = Math.floor(relativeY / cellSize);
+        console.log("column", column);
+        console.log("row", row);
 
         // Determine how many rows the rectangle will cover based on its size (height)
         const numberOfRows = Math.ceil(item.size / cellSize);
-
+        console.log("numberOfRows", numberOfRows);
         // Ensure the calculated column and row are within grid bounds
         if (column >= 0 && column < 10 && row >= 0 && row < 10) {
           const hoveredCells = [];
@@ -86,7 +92,10 @@ const DropGrid: React.FC = () => {
     >
       {squares.map((rowArray, rowIndex) =>
         rowArray.map((cell, columnIndex) => (
-          <span
+          <button
+            onClick={() => {
+              /*rotate*/
+            }}
             key={`${rowIndex}-${columnIndex}`}
             className={clsx("w-5 h-5 block", {
               "bg-stone-500": hoveredCell?.some(
@@ -100,8 +109,8 @@ const DropGrid: React.FC = () => {
               ),
             })}
           >
-            {cell}
-          </span>
+            {/* {cell} */}
+          </button>
         ))
       )}
     </div>
