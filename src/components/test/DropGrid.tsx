@@ -2,23 +2,28 @@ import React, { useState, useRef } from "react";
 import { useDrop } from "react-dnd";
 import clsx from "clsx";
 
-interface Square {
-  id: string;
-  position: number; // Index in the grid
-}
-
 const DropGrid: React.FC = () => {
-  const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<number[][]>([]);
   const hovered = useRef<number>();
-  const [droppedSquares, setDroppedSquares] = useState<number[]>([]);
-  const [squares, setSquares] = useState<Square[]>([]); // Track dropped squares
-  const gridRef = useRef<HTMLDivElement | null>(null); // Reference for the grid
+  const [squares, setSquares] = useState<number[][]>([
+    [0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ]); // Track dropped squares (0 for empty, 1 for occupied)
+  const [droppedSquares, setDroppedSquares] = useState<number[][]>([]);
+  const gridRef = useRef<HTMLDivElement | null>(null);
 
   const [, drop] = useDrop(() => ({
     accept: "SQUARE",
     hover: (item: { id: string; size: number }, monitor) => {
       if (!gridRef.current) return;
-      console.log("hovered");
 
       const gridRect = gridRef.current.getBoundingClientRect();
       const dropPosition = monitor.getClientOffset();
@@ -27,24 +32,47 @@ const DropGrid: React.FC = () => {
         const relativeX = dropPosition.x - gridRect.left;
         const relativeY = dropPosition.y - gridRect.top;
 
-        const cellSize = 20; // Size of each cell in pixels (1.25rem = 20px)
+        const cellSize = 20; // Each cell is 20px
         const column = Math.floor(relativeX / cellSize);
         const row = Math.floor(relativeY / cellSize);
 
-        // Ensure the calculated column and row are within the grid bounds
+        // Determine how many rows the rectangle will cover based on its size (height)
+        const numberOfRows = Math.ceil(item.size / cellSize);
+
+        // Ensure the calculated column and row are within grid bounds
         if (column >= 0 && column < 10 && row >= 0 && row < 10) {
-          const index = row * 10 + column;
-          hovered.current = index;
-          setHoveredCell(index);
-          console.log("hovered");
+          const hoveredCells = [];
+          for (let i = 0; i < numberOfRows; i++) {
+            if (row + i < 10) {
+              // Collect all the cells that the rectangle will hover over
+              hoveredCells.push([row + i, column]);
+            }
+          }
+          setHoveredCell(hoveredCells); // Store all the hovered cells (rows and columns)
         }
       }
     },
     drop: (item: { id: string; size: number }) => {
-      console.log(hovered.current);
-      if (hovered.current) {
-        setDroppedSquares((prev) => [...prev, hovered.current!]);
+      if (!hovered.current) return;
+
+      // Calculate how many rows the dropped rectangle occupies
+      const numberOfRows = Math.ceil(item.size / 20); // item.size is the height of the rectangle in pixels
+
+      // Calculate the starting row and column from hovered.current
+      const startRow = Math.floor(hovered.current / 10);
+      const startColumn = hovered.current % 10;
+
+      const newDroppedSquares: number[][] = [];
+
+      // Collect all the row/column pairs that the rectangle occupies
+      for (let i = 0; i < numberOfRows; i++) {
+        if (startRow + i < 10) {
+          newDroppedSquares.push([startRow + i, startColumn]); // Push each occupied cell
+        }
       }
+
+      // Update the droppedSquares state with the new cells
+      setDroppedSquares((prev) => [...prev, ...newDroppedSquares]);
     },
   }));
 
@@ -56,20 +84,26 @@ const DropGrid: React.FC = () => {
       }}
       className="relative flex w-[200px] flex-wrap"
     >
-      {Array.from({ length: 100 }).map((_, index) => {
-        return (
+      {squares.map((rowArray, rowIndex) =>
+        rowArray.map((cell, columnIndex) => (
           <span
-            key={index}
+            key={`${rowIndex}-${columnIndex}`}
             className={clsx("w-5 h-5 block", {
-              "bg-stone-500": hovered.current === index,
-              "bg-stone-600": droppedSquares.includes(index), // Change color for dropped squares
-              "bg-stone-300": hovered.current !== index,
+              "bg-stone-500": hoveredCell?.some(
+                ([r, c]) => r === rowIndex && c === columnIndex
+              ),
+              "bg-stone-600": droppedSquares.some(
+                ([r, c]) => r === rowIndex && c === columnIndex
+              ),
+              "bg-stone-300": !hoveredCell?.some(
+                ([r, c]) => r === rowIndex && c === columnIndex
+              ),
             })}
           >
-            {index}
+            {cell}
           </span>
-        );
-      })}
+        ))
+      )}
     </div>
   );
 };
