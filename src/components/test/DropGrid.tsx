@@ -13,58 +13,74 @@ const DropGrid: React.FC = () => {
 
   const [, drop] = useDrop(() => ({
     accept: "SQUARE",
-    hover: (item: { id: string; size: number }, monitor) => {
-      if (!gridRef.current) return;
-
-      const gridRect = gridRef.current.getBoundingClientRect();
-      const dropPosition = monitor.getClientOffset();
-
-      if (dropPosition) {
-        const relativeX = dropPosition.x - gridRect.left;
-        const relativeY = dropPosition.y - gridRect.top;
-
-        const cellSize = 20; // Each cell is 20px
-        const column = Math.floor(relativeX / cellSize);
-        const row = Math.floor(relativeY / cellSize);
-
-        const numberOfRows = Math.ceil(item.size / cellSize);
-        const adjustedRow = Math.min(row, 10 - numberOfRows); // Prevent overflow
-
-        if (
-          column >= 0 &&
-          column < 10 &&
-          adjustedRow >= 0 &&
-          adjustedRow < 10
-        ) {
-          const hoveredCells = [];
-          for (let i = 0; i < numberOfRows; i++) {
-            if (adjustedRow + i < 10) {
-              hoveredCells.push([adjustedRow + i, column]);
-            }
-          }
-          hovered.current = hoveredCells;
-          setHoveredCell(hoveredCells);
-        }
-      }
-    },
-    drop: (item: { id: string; size: number }) => {
-      console.log(hovered);
-      if (!hovered.current) return;
-
-      // Get the first hovered cell's position
-      const position = hovered.current[0] as [number, number];
-
-      setDroppedSquares((prev) => [
-        ...prev,
-        {
-          id: item.id + item.size,
-          position,
-          size: item.size,
-        },
-      ]);
-      setHoveredCell([]); // Clear hovered cells after drop
-    },
+    hover: handleHover,
+    drop: handleDrop,
   }));
+
+  function handleDrop(item: { id: string; size: number }) {
+    console.log(hovered);
+    if (!hovered.current) return;
+
+    // Get the first hovered cell's position
+    const position = hovered.current[0] as [number, number];
+
+    setDroppedSquares((prev) => {
+      // Check if a square with the same id already exists
+      console.log("dropped squares", prev);
+      const squareIndex = prev.findIndex((square) => square.size === item.size);
+
+      if (squareIndex !== -1) {
+        // If found, update its position
+        const updatedSquares = [...prev];
+        updatedSquares[squareIndex] = {
+          ...updatedSquares[squareIndex],
+          position,
+        };
+        return updatedSquares;
+      } else {
+        // If not found, add a new square
+        return [
+          ...prev,
+          {
+            id: item.id + item.size,
+            position,
+            size: item.size,
+          },
+        ];
+      }
+    });
+    setHoveredCell([]); // Clear hovered cells after drop
+  }
+
+  function handleHover(item: { id: string; size: number }, monitor: any) {
+    if (!gridRef.current) return;
+
+    const gridRect = gridRef.current.getBoundingClientRect();
+    const dropPosition = monitor.getClientOffset();
+
+    if (dropPosition) {
+      const relativeX = dropPosition.x - gridRect.left;
+      const relativeY = dropPosition.y - gridRect.top;
+
+      const cellSize = 20; // Each cell is 20px
+      const column = Math.floor(relativeX / cellSize);
+      const row = Math.floor(relativeY / cellSize);
+
+      const numberOfRows = Math.ceil(item.size / cellSize);
+      const adjustedRow = Math.min(row, 10 - numberOfRows); // Prevent overflow
+
+      if (column >= 0 && column < 10 && adjustedRow >= 0 && adjustedRow < 10) {
+        const hoveredCells = [];
+        for (let i = 0; i < numberOfRows; i++) {
+          if (adjustedRow + i < 10) {
+            hoveredCells.push([adjustedRow + i, column]);
+          }
+        }
+        hovered.current = hoveredCells;
+        setHoveredCell(hoveredCells);
+      }
+    }
+  }
 
   return (
     <div
@@ -79,7 +95,7 @@ const DropGrid: React.FC = () => {
         Array.from({ length: 10 }, (_, columnIndex) => (
           <button
             key={`${rowIndex}-${columnIndex}`}
-            className={clsx("w-5 h-5 block", {
+            className={clsx("w-5 h-5 block border border-stone-400", {
               "bg-stone-500": hoveredCell?.some(
                 ([r, c]) => r === rowIndex && c === columnIndex
               ),
